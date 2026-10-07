@@ -63,7 +63,7 @@ const mon=i=>i.d0.slice(0,7);
 
 let S=JSON.parse(localStorage.getItem(KEY)||'null')||{cfg:{owner:'',repo:'',token:'',def:'0,1,3,6,9'},items:[],shas:{},dirty:[]};
 S.dirty=S.dirty||[];S.shas=S.shas||{};
-let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false},busy=false,E={id:null,del:null},R=[];
+let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const dirty=m=>{if(!S.dirty.includes(m))S.dirty.push(m)};
 const msg=t=>{const e=$('#msg');if(e)e.textContent=t};
@@ -123,24 +123,40 @@ function add(){
 }
 
 /* ---- Liste ---- */
+function ui(k,id){E={id:null,del:null,tx:null};if(id)E[k]=id;draw()}
 function vList(){
   if(!S.items.length)return '<p class="empty">Henüz cümle yok. "Ekle" sekmesinden başla.</p>';
-  const t=today(),by={};S.items.forEach(i=>(by[mon(i)]=by[mon(i)]||[]).push(i));
-  return Object.keys(by).sort().reverse().map(m=>`<h2>${m} (${by[m].length} cümle)</h2>`+
-    by[m].sort((a,b)=>a.d0<b.d0?1:-1).map(i=>`<div class="row"><div class="q">${esc(i.de)}</div><div class="a2">${esc(i.tr)}</div>
-    <div class="chips">${i.off.map(o=>{const d=addDays(i.d0,o),p=d<=t;return `<span class="chip ${p?'done':''}">${o}. gün, ${d.slice(8)}.${d.slice(5,7)}${p?' ✓':''}</span>`}).join('')}</div>
-    ${E.id===i.id
-      ?`<div class="acts"><input id="eo" value="${esc(i.off.join(','))}" placeholder="0,1,3,6,9,15"><button class="pri" onclick="saveEd('${i.id}')">Kaydet</button><button onclick="E.id=null;draw()">İptal</button></div>`
-      :E.del===i.id
-      ?`<div class="acts"><small>Silinsin mi?</small><br><button onclick="del('${i.id}')">Evet, sil</button><button onclick="E.del=null;draw()">Vazgeç</button></div>`
-      :`<div class="acts"><button onclick="E.id='${i.id}';E.del=null;draw()">Günleri düzenle</button><button onclick="E.del='${i.id}';E.id=null;draw()">Sil</button></div>`}
-    </div>`).join('')).join('');
+  const t=today(),by={};
+  const L=S.items.filter(i=>(!F.from||i.d0>=F.from)&&(!F.to||i.d0<=F.to));
+  L.forEach(i=>(by[mon(i)]=by[mon(i)]||[]).push(i));
+  const fl=`<div class="bar" style="grid-template-columns:1fr 1fr"><div><small>0. gün: başlangıç</small><input type="date" value="${F.from}" onchange="F.from=this.value;draw()"></div>
+  <div><small>0. gün: bitiş</small><input type="date" value="${F.to}" onchange="F.to=this.value;draw()"></div></div>
+  <button onclick="F={from:'',to:''};draw()">Filtreyi temizle</button><p class="muted">${L.length} / ${S.items.length} cümle gösteriliyor</p>`;
+  if(!L.length)return fl+'<p class="empty">Bu tarih aralığında cümle yok.</p>';
+  return fl+Object.keys(by).sort().reverse().map(m=>`<h2>${m} (${by[m].length} cümle)</h2>`+
+    by[m].sort((a,b)=>a.d0<b.d0?1:-1).map(i=>{
+      const head=E.tx===i.id
+        ?`<label>Almanca</label><textarea id="tde" rows="2" lang="de">${esc(i.de)}</textarea><label>Türkçe</label><textarea id="ttr" rows="2" lang="tr">${esc(i.tr)}</textarea>
+          <div class="acts"><button class="pri" onclick="saveTx('${i.id}')">Kaydet</button><button onclick="ui('tx',null)">İptal</button></div><p id="emsg" class="muted"></p>`
+        :`<div class="q">${esc(i.de)}</div><div class="a2">${esc(i.tr)}</div>`;
+      const acts=E.id===i.id
+        ?`<div class="acts"><input id="eo" value="${esc(i.off.join(','))}" placeholder="0,1,3,6,9,15"><button class="pri" onclick="saveEd('${i.id}')">Kaydet</button><button onclick="ui('id',null)">İptal</button></div>`
+        :E.del===i.id
+        ?`<div class="acts"><small>Silinsin mi?</small><br><button onclick="del('${i.id}')">Evet, sil</button><button onclick="ui('del',null)">Vazgeç</button></div>`
+        :E.tx===i.id?'':`<div class="acts"><button onclick="ui('id','${i.id}')">Günleri düzenle</button><button onclick="ui('tx','${i.id}')">Metni düzenle</button><button onclick="ui('del','${i.id}')">Sil</button></div>`;
+      return `<div class="row">${head}<div class="chips">${i.off.map(o=>{const d=addDays(i.d0,o),p=d<=t;return `<span class="chip ${p?'done':''}">${o}. gün, ${d.slice(8)}.${d.slice(5,7)}${p?' ✓':''}</span>`}).join('')}</div>${acts}</div>`}).join('')).join('');
 }
 function saveEd(id){
   const i=S.items.find(x=>x.id===id);if(!i)return;
   const o=parseOff($('#eo').value);
   if(!o.length){$('#eo').value='';$('#eo').placeholder='Geçersiz. Örnek: 0,1,3,6,9,15';return}
   i.off=o;E.id=null;dirty(mon(i));save();draw();sync();
+}
+function saveTx(id){
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  const de=$('#tde').value.trim(),tr=$('#ttr').value.trim();
+  if(!de||!tr){$('#emsg').textContent='Almanca ve Türkçe alanları boş olamaz.';return}
+  i.de=de;i.tr=tr;E.tx=null;dirty(mon(i));save();draw();sync();
 }
 function del(id){
   const i=S.items.find(x=>x.id===id);if(!i)return;
