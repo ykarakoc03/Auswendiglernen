@@ -39,6 +39,9 @@ h2{font-size:.95rem;margin:22px 0 0;color:var(--mut)}
 small,.muted{color:var(--mut)}.empty{color:var(--mut);margin-top:30px;text-align:center}
 hr{border:0;border-top:1px solid var(--line);margin:20px 0 6px}
 .file{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);margin:8px 0 0;color:var(--ink);font-size:1rem}
+.card.ok,.row.ok{background:#e3f2ea}
+.tick{font-size:1.3rem}.tick.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.row.tl{position:relative;padding-right:74px}.row.tl .tick{position:absolute;right:10px;top:10px;margin:0;min-width:52px;padding:8px 0}
 </style>
 </head>
 <body>
@@ -63,7 +66,7 @@ const mon=i=>i.d0.slice(0,7);
 
 let S=JSON.parse(localStorage.getItem(KEY)||'null')||{cfg:{owner:'',repo:'',token:'',def:'0,1,3,6,9'},items:[],shas:{},dirty:[]};
 S.dirty=S.dirty||[];S.shas=S.shas||{};
-let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
+let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false,hide:true,rst:false,lock:false},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const dirty=m=>{if(!S.dirty.includes(m))S.dirty.push(m)};
 const msg=t=>{const e=$('#msg');if(e)e.textContent=t};
@@ -80,26 +83,52 @@ function draw(){
 
 /* ---- Bugün ---- */
 const days=(i,D)=>i.off.filter(o=>addDays(i.d0,o)===D);
+const isDone=(i,D)=>(i.done||[]).includes(D);
 function vToday(){
-  const L=S.items.filter(i=>days(i,V.date).length).sort((a,b)=>a.d0<b.d0?-1:1);
+  const A=S.items.filter(i=>days(i,V.date).length).sort((a,b)=>a.d0<b.d0?-1:1);
+  const nd=A.filter(i=>isDone(i,V.date)).length;
+  const L=V.hide?A.filter(i=>!isDone(i,V.date)):A;
   const h=`<div class="bar">
-  <input type="date" value="${V.date}" onchange="if(this.value){V.date=this.value;V.idx=0;V.shown=false;draw()}">
+  <input type="date" value="${V.date}" onchange="if(this.value){V.date=this.value;V.idx=0;V.shown=false;V.rst=false;draw()}">
   <select onchange="V.dir=this.value;V.shown=false;draw()">
     <option value="tr" ${V.dir=='tr'?'selected':''}>Türkçesini göster, Almancasını sor</option>
     <option value="de" ${V.dir=='de'?'selected':''}>Almancasını göster, Türkçesini sor</option></select>
   <select onchange="V.sty=this.value;draw()">
     <option value="card" ${V.sty=='card'?'selected':''}>Kart görünümü</option>
     <option value="list" ${V.sty=='list'?'selected':''}>Liste görünümü</option></select></div>`;
-  if(!L.length)return h+'<p class="empty">Bu tarihte tekrar edilecek cümle yok.</p>';
+  if(!A.length)return h+'<p class="empty">Bu tarihte tekrar edilecek cümle yok.</p>';
+  const tb=`<p class="muted">${nd} / ${A.length} öğrenildi</p><div class="acts" style="margin-top:0">`+
+    `<button onclick="V.hide=!V.hide;V.idx=0;V.shown=false;draw()">${V.hide?'Hepsini yeniden tekrar et':'Sadece kalanları göster'}</button>`+
+    (V.rst?`<br><small>İşaretler sıfırlansın mı?</small><br><button onclick="rstDone()">Evet</button><button onclick="V.rst=false;draw()">Vazgeç</button>`
+          :(nd?`<button onclick="V.rst=true;draw()">İşaretleri sıfırla</button>`:''))+`</div>`;
+  if(!L.length)return h+tb+'<div class="card" style="text-align:center"><div class="q">Bu tarihteki tekrarlar tamam.</div></div>';
   const q=x=>V.dir=='tr'?x.tr:x.de,a=x=>V.dir=='tr'?x.de:x.tr;
-  if(V.sty=='list')return h+`<p class="muted">${L.length} cümle. Cevap için satıra dokun.</p>`+
-    L.map(x=>`<div class="row" onclick="this.classList.toggle('open')"><div class="q">${esc(q(x))}</div><div class="a">${esc(a(x))}</div><small>${days(x,V.date).join(', ')}. gün tekrarı</small></div>`).join('');
-  V.idx=Math.max(0,Math.min(V.idx,L.length-1));const x=L[V.idx];
-  return h+`<div class="card"><small>${V.idx+1} / ${L.length}, ${days(x,V.date).join(', ')}. gün tekrarı</small>
+  if(V.sty=='list')return h+tb+L.map(x=>{const d=isDone(x,V.date);
+    return `<div class="row tl ${d?'ok':''}" id="r${x.id}" onclick="this.classList.toggle('open')"><div class="q">${esc(q(x))}</div><div class="a">${esc(a(x))}</div><small>${days(x,V.date).join(', ')}. gün tekrarı</small>
+    <button class="tick ${d?'on':''}" aria-label="Öğrendim" onclick="event.stopPropagation();tk('${x.id}')">✓</button></div>`}).join('');
+  V.idx=Math.max(0,Math.min(V.idx,L.length-1));const x=L[V.idx],dn=isDone(x,V.date);
+  return h+tb+`<div class="card ${dn?'ok':''}" id="cd"><small>${V.idx+1} / ${L.length}, ${days(x,V.date).join(', ')}. gün tekrarı</small>
   <div class="q">${esc(q(x))}</div><div class="a" style="display:${V.shown?'block':'none'}">${esc(a(x))}</div></div>
-  <div class="btns"><button onclick="mv(-1)">Önceki</button><button class="pri" onclick="V.shown=!V.shown;draw()">${V.shown?'Gizle':'Göster'}</button><button onclick="mv(1)">Sonraki</button></div>`;
+  <div class="btns"><button onclick="mv(-1)">Önceki</button><button class="pri" onclick="V.shown=!V.shown;draw()">${V.shown?'Gizle':'Göster'}</button><button class="tick ${dn?'on':''}" aria-label="Öğrendim" onclick="tk('${x.id}')">✓</button><button onclick="mv(1)">Sonraki</button></div>`;
 }
 function mv(d){V.idx=Math.max(0,V.idx+d);V.shown=false;draw()}
+function tk(id){
+  if(V.lock)return;
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  i.done=i.done||[];const D=V.date,k=i.done.indexOf(D),on=k<0;
+  if(on)i.done.push(D);else i.done.splice(k,1);
+  dirty(mon(i));save();setSt();schedSync();
+  const el=V.sty=='list'?document.getElementById('r'+id):$('#cd'),tb=V.sty=='list'?(el&&el.querySelector('.tick')):$('.btns .tick');
+  if(el)el.classList.toggle('ok',on);if(tb)tb.classList.toggle('on',on);
+  V.lock=true;
+  setTimeout(()=>{V.lock=false;if(T!=='today')return;
+    if(on&&!V.hide&&V.sty=='card')V.idx++;
+    V.shown=false;draw()},350);
+}
+function rstDone(){
+  S.items.forEach(i=>{if(days(i,V.date).length&&isDone(i,V.date)){i.done=i.done.filter(d=>d!==V.date);dirty(mon(i))}});
+  V.rst=false;V.idx=0;save();setSt();schedSync();draw();
+}
 
 /* ---- Ekle ---- */
 function vAdd(){return `<label>0. gün (tarih)</label><input type="date" id="d0" value="${today()}">
@@ -144,7 +173,7 @@ function vList(){
         :E.del===i.id
         ?`<div class="acts"><small>Silinsin mi?</small><br><button onclick="del('${i.id}')">Evet, sil</button><button onclick="ui('del',null)">Vazgeç</button></div>`
         :E.tx===i.id?'':`<div class="acts"><button onclick="ui('id','${i.id}')">Günleri düzenle</button><button onclick="ui('tx','${i.id}')">Metni düzenle</button><button onclick="ui('del','${i.id}')">Sil</button></div>`;
-      return `<div class="row">${head}<div class="chips">${i.off.map(o=>{const d=addDays(i.d0,o),p=d<=t;return `<span class="chip ${p?'done':''}">${o}. gün, ${d.slice(8)}.${d.slice(5,7)}${p?' ✓':''}</span>`}).join('')}</div>${acts}</div>`}).join('')).join('');
+      return `<div class="row">${head}<div class="chips">${i.off.map(o=>{const d=addDays(i.d0,o),p=(i.done||[]).includes(d);return `<span class="chip ${p?'done':''}">${o}. gün, ${d.slice(8)}.${d.slice(5,7)}${p?' ✓':''}</span>`}).join('')}</div>${acts}</div>`}).join('')).join('');
 }
 function saveEd(id){
   const i=S.items.find(x=>x.id===id);if(!i)return;
@@ -217,15 +246,23 @@ async function push(m){
   if(!res.ok)throw new Error('GitHub hatası: '+res.status);
   S.shas[m]=(await res.json()).content.sha;S.dirty=S.dirty.filter(x=>x!==m);save();
 }
-async function sync(show){
+let again=false,SY;
+const schedSync=()=>{clearTimeout(SY);SY=setTimeout(()=>sync(),30000)};
+async function sync(show,noPull){
   if(!conf()){setSt();return}
-  if(busy)return;busy=true;setSt('eşitleniyor');
-  try{await pull();for(const m of [...S.dirty])await push(m);setSt();if(show)msg('Eşitlendi.')}
-  catch(e){setSt('eşitleme hatası');if(show)msg(e.message)}
-  busy=false;if(T==='today'||T==='list')draw();
+  if(busy){again=true;return}
+  busy=true;setSt('eşitleniyor');let ok=true;
+  try{if(!noPull)await pull();for(const m of [...S.dirty])await push(m);setSt();if(show)msg('Eşitlendi.')}
+  catch(e){ok=false;setSt('eşitleme hatası');if(show)msg(e.message)}
+  busy=false;
+  if((T==='today'||T==='list')&&!E.id&&!E.tx&&!V.lock)draw();
+  if(again&&ok){again=false;sync()}
 }
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){clearTimeout(SY);if(S.dirty.length)sync(false,true)}
+  else sync();
+});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 draw();sync();
 </script>
