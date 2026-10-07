@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cümleler">
+<title>Cümle Tekrar</title>
+<style>
+:root{--bg:#eef2f6;--card:#fff;--ink:#16202b;--mut:#6b7885;--acc:#1f5fbf;--ok:#2e7d5b;--line:#d5dde6}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,"SF Pro Text",system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:baseline;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 8px}
+h1{font-size:1.15rem;margin:0}
+#st{font-size:.8rem;color:var(--mut)}
+main{padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 90px);max-width:640px;margin:0 auto}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;background:none;padding:14px 0;font-size:.95rem;color:var(--mut)}
+nav button.on{color:var(--acc);font-weight:600;box-shadow:inset 0 2px 0 var(--acc)}
+label{display:block;margin:14px 0 4px;font-size:.85rem;color:var(--mut)}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+button{font:inherit;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);margin:8px 8px 0 0}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.bar{display:grid;gap:8px}
+.card{background:var(--card);border-radius:12px;padding:22px 18px;margin-top:14px;min-height:190px}
+.card .q,.row .q{font-size:1.45rem;line-height:1.3;margin-top:10px}
+.a{display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:1.25rem;color:var(--acc)}
+.row{background:var(--card);border-radius:10px;padding:12px 14px;margin-top:10px}
+.row .q{font-size:1.05rem;font-weight:600;margin:0}
+.row.open .a{display:block;font-size:1rem;margin-top:8px;padding-top:8px}
+.a2{color:var(--mut);margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:.78rem;padding:3px 8px;border-radius:999px;background:var(--bg);color:var(--mut)}
+.chip.done{background:#e3f2ea;color:var(--ok)}
+.acts button{font-size:.85rem;padding:6px 10px;margin-top:10px}
+.btns{display:flex;gap:8px;margin-top:12px}.btns button{flex:1;margin:0}
+h2{font-size:.95rem;margin:22px 0 0;color:var(--mut)}
+small,.muted{color:var(--mut)}.empty{color:var(--mut);margin-top:30px;text-align:center}
+hr{border:0;border-top:1px solid var(--line);margin:20px 0 6px}
+.file{display:inline-block;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);margin:8px 0 0;color:var(--ink);font-size:1rem}
+</style>
+</head>
+<body>
+<header><h1>Cümle Tekrar</h1><span id="st"></span></header>
+<main id="v"></main>
+<nav>
+<button data-t="today" onclick="go('today')">Bugün</button>
+<button data-t="add" onclick="go('add')">Ekle</button>
+<button data-t="list" onclick="go('list')">Liste</button>
+<button data-t="set" onclick="go('set')">Ayarlar</button>
+</nav>
+<script>
+const $=s=>document.querySelector(s);
+const KEY='ct_v1';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmt=t=>t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+const today=()=>fmt(new Date());
+const addDays=(s,n)=>{const [y,m,d]=s.split('-').map(Number);return fmt(new Date(y,m-1,d+n))};
+const parseOff=s=>[...new Set(String(s).split(/[,\s]+/).map(Number).filter(n=>Number.isInteger(n)&&n>=0))].sort((a,b)=>a-b);
+const mon=i=>i.d0.slice(0,7);
+
+let S=JSON.parse(localStorage.getItem(KEY)||'null')||{cfg:{owner:'',repo:'',token:'',def:'0,1,3,6,9'},items:[],shas:{},dirty:[]};
+S.dirty=S.dirty||[];S.shas=S.shas||{};
+let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false},busy=false,E={id:null,del:null},R=[];
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const dirty=m=>{if(!S.dirty.includes(m))S.dirty.push(m)};
+const msg=t=>{const e=$('#msg');if(e)e.textContent=t};
+const conf=()=>S.cfg.owner&&S.cfg.repo&&S.cfg.token;
+const stat=()=>!conf()?'yalnızca telefonda':S.dirty.length?'bekliyor ('+S.dirty.length+')':'eşitlendi';
+const setSt=t=>{$('#st').textContent=t||stat()};
+const go=t=>{T=t;draw()};
+
+function draw(){
+  setSt();
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===T));
+  $('#v').innerHTML=({today:vToday,add:vAdd,list:vList,set:vSet})[T]();
+}
+
+/* ---- Bugün ---- */
+const days=(i,D)=>i.off.filter(o=>addDays(i.d0,o)===D);
+function vToday(){
+  const L=S.items.filter(i=>days(i,V.date).length).sort((a,b)=>a.d0<b.d0?-1:1);
+  const h=`<div class="bar">
+  <input type="date" value="${V.date}" onchange="if(this.value){V.date=this.value;V.idx=0;V.shown=false;draw()}">
+  <select onchange="V.dir=this.value;V.shown=false;draw()">
+    <option value="tr" ${V.dir=='tr'?'selected':''}>Türkçesini göster, Almancasını sor</option>
+    <option value="de" ${V.dir=='de'?'selected':''}>Almancasını göster, Türkçesini sor</option></select>
+  <select onchange="V.sty=this.value;draw()">
+    <option value="card" ${V.sty=='card'?'selected':''}>Kart görünümü</option>
+    <option value="list" ${V.sty=='list'?'selected':''}>Liste görünümü</option></select></div>`;
+  if(!L.length)return h+'<p class="empty">Bu tarihte tekrar edilecek cümle yok.</p>';
+  const q=x=>V.dir=='tr'?x.tr:x.de,a=x=>V.dir=='tr'?x.de:x.tr;
+  if(V.sty=='list')return h+`<p class="muted">${L.length} cümle. Cevap için satıra dokun.</p>`+
+    L.map(x=>`<div class="row" onclick="this.classList.toggle('open')"><div class="q">${esc(q(x))}</div><div class="a">${esc(a(x))}</div><small>${days(x,V.date).join(', ')}. gün tekrarı</small></div>`).join('');
+  V.idx=Math.max(0,Math.min(V.idx,L.length-1));const x=L[V.idx];
+  return h+`<div class="card"><small>${V.idx+1} / ${L.length}, ${days(x,V.date).join(', ')}. gün tekrarı</small>
+  <div class="q">${esc(q(x))}</div><div class="a" style="display:${V.shown?'block':'none'}">${esc(a(x))}</div></div>
+  <div class="btns"><button onclick="mv(-1)">Önceki</button><button class="pri" onclick="V.shown=!V.shown;draw()">${V.shown?'Gizle':'Göster'}</button><button onclick="mv(1)">Sonraki</button></div>`;
+}
+function mv(d){V.idx=Math.max(0,V.idx+d);V.shown=false;draw()}
+
+/* ---- Ekle ---- */
+function vAdd(){return `<label>0. gün (tarih)</label><input type="date" id="d0" value="${today()}">
+<label>Tekrar günleri</label><input id="of" value="${esc(S.cfg.def)}">
+<label>Almanca</label><textarea id="fde" rows="2" lang="de" enterkeyhint="next" onkeydown="if(event.key==='Enter'){event.preventDefault();$('#ftr').focus()}"></textarea>
+<label>Türkçe</label><textarea id="ftr" rows="2" lang="tr" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();add()}"></textarea>
+<button class="pri" onclick="add()">Ekle</button><p id="msg" class="muted"></p>
+<div id="rc">${recent()}</div>`}
+function recent(){
+  const L=R.map(id=>S.items.find(i=>i.id===id)).filter(Boolean);
+  return L.length?`<h2>Bu oturumda eklenen: ${L.length}</h2>`+L.slice().reverse().map(i=>`<div class="row"><div class="q">${esc(i.de)}</div><div class="a2">${esc(i.tr)}</div></div>`).join(''):'';
+}
+function add(){
+  const de=$('#fde').value.trim(),tr=$('#ftr').value.trim(),d0=$('#d0').value||today(),off=parseOff($('#of').value);
+  if(!off.length)return msg('Tekrar günleri geçersiz. Örnek: 0,1,3,6,9');
+  if(!de||!tr)return msg('Almanca ve Türkçe alanlarını doldur.');
+  const it={id:uid(),de,tr,d0,off};
+  S.items.push(it);R.push(it.id);dirty(d0.slice(0,7));save();setSt();
+  $('#fde').value='';$('#ftr').value='';$('#fde').focus();
+  msg('Eklendi.');$('#rc').innerHTML=recent();sync();
+}
+
+/* ---- Liste ---- */
+function vList(){
+  if(!S.items.length)return '<p class="empty">Henüz cümle yok. "Ekle" sekmesinden başla.</p>';
+  const t=today(),by={};S.items.forEach(i=>(by[mon(i)]=by[mon(i)]||[]).push(i));
+  return Object.keys(by).sort().reverse().map(m=>`<h2>${m} (${by[m].length} cümle)</h2>`+
+    by[m].sort((a,b)=>a.d0<b.d0?1:-1).map(i=>`<div class="row"><div class="q">${esc(i.de)}</div><div class="a2">${esc(i.tr)}</div>
+    <div class="chips">${i.off.map(o=>{const d=addDays(i.d0,o),p=d<=t;return `<span class="chip ${p?'done':''}">${o}. gün, ${d.slice(8)}.${d.slice(5,7)}${p?' ✓':''}</span>`}).join('')}</div>
+    ${E.id===i.id
+      ?`<div class="acts"><input id="eo" value="${esc(i.off.join(','))}" placeholder="0,1,3,6,9,15"><button class="pri" onclick="saveEd('${i.id}')">Kaydet</button><button onclick="E.id=null;draw()">İptal</button></div>`
+      :E.del===i.id
+      ?`<div class="acts"><small>Silinsin mi?</small><br><button onclick="del('${i.id}')">Evet, sil</button><button onclick="E.del=null;draw()">Vazgeç</button></div>`
+      :`<div class="acts"><button onclick="E.id='${i.id}';E.del=null;draw()">Günleri düzenle</button><button onclick="E.del='${i.id}';E.id=null;draw()">Sil</button></div>`}
+    </div>`).join('')).join('');
+}
+function saveEd(id){
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  const o=parseOff($('#eo').value);
+  if(!o.length){$('#eo').value='';$('#eo').placeholder='Geçersiz. Örnek: 0,1,3,6,9,15';return}
+  i.off=o;E.id=null;dirty(mon(i));save();draw();sync();
+}
+function del(id){
+  const i=S.items.find(x=>x.id===id);if(!i)return;
+  S.items=S.items.filter(x=>x.id!==id);E.del=null;dirty(mon(i));save();draw();sync();
+}
+
+/* ---- Ayarlar ---- */
+function vSet(){const c=S.cfg;return `<p class="muted">GitHub eşitlemesi isteğe bağlı. Boş bırakırsan veriler yalnızca telefonda kalır.</p>
+<label>GitHub kullanıcı adı</label><input id="ow" value="${esc(c.owner)}" autocapitalize="off" autocorrect="off">
+<label>Depo adı</label><input id="rp" value="${esc(c.repo)}" autocapitalize="off" autocorrect="off">
+<label>Erişim anahtarı (fine-grained token, Contents: Read and write)</label><input id="tk" type="password" value="${esc(c.token)}">
+<label>Varsayılan tekrar günleri</label><input id="df" value="${esc(c.def)}">
+<button class="pri" onclick="saveCfg()">Ayarları kaydet</button><button onclick="sync(true)">Şimdi eşitle</button>
+<hr><button onclick="exp()">Yedek indir</button>
+<label class="file">Yedek yükle<input type="file" accept=".json" onchange="imp(this.files[0])" hidden></label><p id="msg" class="muted"></p>`}
+function saveCfg(){
+  S.cfg={owner:$('#ow').value.trim(),repo:$('#rp').value.trim(),token:$('#tk').value.trim(),def:parseOff($('#df').value).join(',')||'0,1,3,6,9'};
+  save();setSt();msg('Kaydedildi.');sync(true);
+}
+async function exp(){
+  const j=JSON.stringify(S.items,null,1),f=new File([j],'cumleler-yedek.json',{type:'application/json'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();
+}
+async function imp(f){
+  if(!f)return;
+  try{const arr=JSON.parse(await f.text()),have=new Set(S.items.map(i=>i.id));let n=0;
+    for(const i of arr){if(!i.id||!i.de||!i.tr||!i.d0||!Array.isArray(i.off)||have.has(i.id))continue;S.items.push(i);dirty(mon(i));n++}
+    save();setSt();msg(n+' cümle yüklendi.');sync();
+  }catch(e){msg('Dosya okunamadı.')}
+}
+
+/* ---- GitHub eşitleme ---- */
+const api=p=>`https://api.github.com/repos/${S.cfg.owner}/${S.cfg.repo}/contents/${p}`;
+const hd=()=>({Authorization:'Bearer '+S.cfg.token,Accept:'application/vnd.github+json'});
+const b64=s=>{let b='';for(const x of new TextEncoder().encode(s))b+=String.fromCharCode(x);return btoa(b)};
+const put=(m,b)=>fetch(api('data/'+m+'.json'),{method:'PUT',headers:{...hd(),'Content-Type':'application/json'},body:b});
+async function pull(){
+  const r=await fetch(api('data'),{headers:hd(),cache:'no-store'});
+  if(r.status===404)return;
+  if(!r.ok)throw new Error('GitHub hatası: '+r.status);
+  for(const f of (await r.json()).filter(f=>/^\d{4}-\d{2}\.json$/.test(f.name))){
+    const m=f.name.slice(0,7);S.shas[m]=f.sha;
+    if(S.dirty.includes(m))continue;
+    const x=await fetch(api('data/'+f.name),{headers:{...hd(),Accept:'application/vnd.github.raw+json'},cache:'no-store'});
+    if(!x.ok)throw new Error('GitHub hatası: '+x.status);
+    S.items=S.items.filter(i=>mon(i)!==m).concat(JSON.parse(await x.text()));
+  }
+  save();
+}
+async function push(m){
+  const body=sha=>JSON.stringify({message:'Güncelle '+m,content:b64(JSON.stringify(S.items.filter(i=>mon(i)===m),null,1)),...(sha?{sha}:{})});
+  let res=await put(m,body(S.shas[m]));
+  if(res.status===409||res.status===422){
+    const g=await fetch(api('data/'+m+'.json'),{headers:hd(),cache:'no-store'});
+    res=await put(m,body(g.ok?(await g.json()).sha:undefined));
+  }
+  if(!res.ok)throw new Error('GitHub hatası: '+res.status);
+  S.shas[m]=(await res.json()).content.sha;S.dirty=S.dirty.filter(x=>x!==m);save();
+}
+async function sync(show){
+  if(!conf()){setSt();return}
+  if(busy)return;busy=true;setSt('eşitleniyor');
+  try{await pull();for(const m of [...S.dirty])await push(m);setSt();if(show)msg('Eşitlendi.')}
+  catch(e){setSt('eşitleme hatası');if(show)msg(e.message)}
+  busy=false;if(T==='today'||T==='list')draw();
+}
+
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+draw();sync();
+</script>
+</body>
+</html>
