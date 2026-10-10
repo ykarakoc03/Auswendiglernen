@@ -685,5 +685,18 @@
   "done": [
    "2026-10-09"
   ]
+ },
+ {
+  "id": "mv2555epe9ts",
+  "de": "Ich versuche es, die Arbeit bis morgen fertig zu bekommen.",
+  "tr": "İşi yarına yetiştirmeye çalışıyorum",
+  "d0": "2026-10-10",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ]
  }
 ]
