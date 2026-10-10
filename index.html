@@ -66,7 +66,7 @@ const mon=i=>i.d0.slice(0,7);
 
 let S=JSON.parse(localStorage.getItem(KEY)||'null')||{cfg:{owner:'',repo:'',token:'',def:'0,1,3,6,9'},items:[],shas:{},dirty:[]};
 S.dirty=S.dirty||[];S.shas=S.shas||{};
-let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false,hide:true,rst:false,lock:false},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
+let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false,hide:true,rst:false,lock:false,seed:Math.random()*4294967296|0},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const dirty=m=>{if(!S.dirty.includes(m))S.dirty.push(m)};
 const msg=t=>{const e=$('#msg');if(e)e.textContent=t};
@@ -84,12 +84,14 @@ function draw(){
 /* ---- Bugün ---- */
 const days=(i,D)=>i.off.filter(o=>addDays(i.d0,o)===D);
 const isDone=(i,D)=>(i.done||[]).includes(D);
+const newSeed=()=>Math.random()*4294967296|0;
+const rk=(id,seed)=>{let x=seed;for(const c of id)x=Math.imul(x^c.charCodeAt(0),2654435761);x^=x>>>15;x=Math.imul(x,2246822519);return x>>>0};
 function vToday(){
   const A=S.items.filter(i=>days(i,V.date).length).sort((a,b)=>a.d0<b.d0?-1:1);
   const nd=A.filter(i=>isDone(i,V.date)).length;
   const L=V.hide?A.filter(i=>!isDone(i,V.date)):A;
   const h=`<div class="bar">
-  <input type="date" value="${V.date}" onchange="if(this.value){V.date=this.value;V.idx=0;V.shown=false;V.rst=false;draw()}">
+  <input type="date" value="${V.date}" onchange="if(this.value){V.date=this.value;V.idx=0;V.seed=newSeed();V.shown=false;V.rst=false;draw()}">
   <select onchange="V.dir=this.value;V.shown=false;draw()">
     <option value="tr" ${V.dir=='tr'?'selected':''}>Türkçesini göster, Almancasını sor</option>
     <option value="de" ${V.dir=='de'?'selected':''}>Almancasını göster, Türkçesini sor</option></select>
@@ -98,7 +100,7 @@ function vToday(){
     <option value="list" ${V.sty=='list'?'selected':''}>Liste görünümü</option></select></div>`;
   if(!A.length)return h+'<p class="empty">Bu tarihte tekrar edilecek cümle yok.</p>';
   const tb=`<p class="muted">${nd} / ${A.length} öğrenildi</p><div class="acts" style="margin-top:0">`+
-    `<button onclick="V.hide=!V.hide;V.idx=0;V.shown=false;draw()">${V.hide?'Hepsini yeniden tekrar et':'Sadece kalanları göster'}</button>`+
+    `<button onclick="V.hide=!V.hide;V.idx=0;V.seed=newSeed();V.shown=false;draw()">${V.hide?'Hepsini yeniden tekrar et':'Sadece kalanları göster'}</button>`+
     (V.rst?`<br><small>İşaretler sıfırlansın mı?</small><br><button onclick="rstDone()">Evet</button><button onclick="V.rst=false;draw()">Vazgeç</button>`
           :(nd?`<button onclick="V.rst=true;draw()">İşaretleri sıfırla</button>`:''))+`</div>`;
   if(!L.length)return h+tb+'<div class="card" style="text-align:center"><div class="q">Bu tarihteki tekrarlar tamam.</div></div>';
@@ -106,12 +108,14 @@ function vToday(){
   if(V.sty=='list')return h+tb+L.map(x=>{const d=isDone(x,V.date);
     return `<div class="row tl ${d?'ok':''}" id="r${x.id}" onclick="this.classList.toggle('open')"><div class="q">${esc(q(x))}</div><div class="a">${esc(a(x))}</div><small>${days(x,V.date).join(', ')}. gün tekrarı</small>
     <button class="tick ${d?'on':''}" aria-label="Öğrendim" onclick="event.stopPropagation();tk('${x.id}')">✓</button></div>`}).join('');
-  V.idx=Math.max(0,Math.min(V.idx,L.length-1));const x=L[V.idx],dn=isDone(x,V.date);
-  return h+tb+`<div class="card ${dn?'ok':''}" id="cd"><small>${V.idx+1} / ${L.length}, ${days(x,V.date).join(', ')}. gün tekrarı</small>
+  const srt=()=>L.slice().sort((a,b)=>rk(a.id,V.seed)-rk(b.id,V.seed));let C=srt();
+  if(V.idx>=C.length){V.idx=0;V.seed=newSeed();C=srt()}else if(V.idx<0)V.idx=C.length-1;
+  const x=C[V.idx],dn=isDone(x,V.date);
+  return h+tb+`<div class="card ${dn?'ok':''}" id="cd"><small>${V.idx+1} / ${C.length}, ${days(x,V.date).join(', ')}. gün tekrarı</small>
   <div class="q">${esc(q(x))}</div><div class="a" style="display:${V.shown?'block':'none'}">${esc(a(x))}</div></div>
   <div class="btns"><button onclick="mv(-1)">Önceki</button><button class="pri" onclick="V.shown=!V.shown;draw()">${V.shown?'Gizle':'Göster'}</button><button class="tick ${dn?'on':''}" aria-label="Öğrendim" onclick="tk('${x.id}')">✓</button><button onclick="mv(1)">Sonraki</button></div>`;
 }
-function mv(d){V.idx=Math.max(0,V.idx+d);V.shown=false;draw()}
+function mv(d){V.idx+=d;V.shown=false;draw()}
 function tk(id){
   if(V.lock)return;
   const i=S.items.find(x=>x.id===id);if(!i)return;
