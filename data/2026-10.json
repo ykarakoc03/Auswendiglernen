@@ -908,5 +908,18 @@
   "done": [
    "2026-10-10"
   ]
+ },
+ {
+  "id": "mv3kfh468hcg",
+  "de": "Ich hab mich ausgesperrt.",
+  "tr": "Kapıda kaldım. (Kendimi dışarıda bıraktım)",
+  "d0": "2026-10-11",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ]
  }
 ]
