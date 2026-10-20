@@ -1691,5 +1691,18 @@
   "done": [
    "2026-10-19"
   ]
+ },
+ {
+  "id": "mvgb7kpiofwu",
+  "de": "ich steh im Stau.",
+  "tr": "Trafiğe takıldım",
+  "d0": "2026-10-20",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ]
  }
 ]
