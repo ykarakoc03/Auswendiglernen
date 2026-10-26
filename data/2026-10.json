@@ -2269,8 +2269,8 @@
  },
  {
   "id": "mvje7k3ogepd",
-  "de": "Ich hab mich vertan.",
-  "tr": "Yanılmışım.",
+  "de": "Ich hab mich vertan. (bei der Uhrzeit, im Datum)",
+  "tr": "Yanılmışım./ Karıştırmışım",
   "d0": "2026-10-22",
   "off": [
    0,
