@@ -2832,5 +2832,18 @@
    6,
    9
   ]
+ },
+ {
+  "id": "mvusmlng1s8a",
+  "de": "Der Server war ausgefallen.",
+  "tr": "Sunucu çökmüş/arızalanmış",
+  "d0": "2026-10-30",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ]
  }
 ]
