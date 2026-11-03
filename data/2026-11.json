@@ -1,0 +1,326 @@
+[
+ {
+  "id": "mvz8qqhu1z5r",
+  "de": "Das zieht sich.",
+  "tr": "Bu uzayıp gidiyor.",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz8rvvyw1j8",
+  "de": "Ich muss erstmal sacken lassen.",
+  "tr": "Bunu önce sindirme gerekiyor",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz8sf82gz9k",
+  "de": "Das war keine Absicht.",
+  "tr": "Kasten değildi",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz8v7xcftdu",
+  "de": "Ich hab’s im Gefühl.",
+  "tr": "İçime doğuyor. ( içimde bir his var)",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz8vz5v24xd",
+  "de": "Ich mach mir da keine Hoffnung.",
+  "tr": "Bu konuda umutlanmıyorum.",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz9feo263tg",
+  "de": "Das steht noch in den Sternen.",
+  "tr": "Bu henüz belli değil.",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz9g4begfiw",
+  "de": "Ich muss mich erst mal um mich kümmern.",
+  "tr": "Önce kendimle ilgilenmem gerek.",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mvz9h4dw6yyc",
+  "de": "Das hat seine Vor- und Nachteile.",
+  "tr": "Bunun iyi ve kötü yönleri var.",
+  "d0": "2026-11-02",
+  "off": [
+   0,
+   1,
+   3,
+   6,
+   9
+  ],
+  "done": [
+   "2026-11-02"
+  ]
+ },
+ {
+  "id": "mw0nanheocah",
+  "de": "Ich weiß nicht, ob das so eine gute Idee ist.",
+  "tr": "Bunun iyi bir fikir olup olmadığından emin değilim.",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nb6a6anf6",
+  "de": "Da muss ich passen.",
+  "tr": "Bu sefer pas geçiyorum",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nbtso2rts",
+  "de": "Das ist echt nicht fair.",
+  "tr": "Bu gerçekten adil değil.",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nc9mz54xp",
+  "de": "Ich bin platt.",
+  "tr": "Bitkinim",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0ncuo6uswi",
+  "de": "Das ist echt praktisch.",
+  "tr": "Bu gerçekten pratik",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0ndmf6gu7q",
+  "de": "Widerlich!",
+  "tr": "İğrenç",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nejcqxctz",
+  "de": "Ich kann nicht mehr.",
+  "tr": "Artık dayanamıyorum (daha fazla yapamıyorum)",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nexorfjst",
+  "de": "Lass uns los.",
+  "tr": "Hadi gidelim",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nfgjxfyp9",
+  "de": "Das ist doch egal.",
+  "tr": "Bu önemli değil",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0ng726ved5",
+  "de": "Sei vorsichtig",
+  "tr": "dikkatli ol",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0ngi8l8cnk",
+  "de": "Das dauert noch.",
+  "tr": "Bu biraz daha sürer",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nh62cqpyk",
+  "de": "Ich hab gerade keine Zeit",
+  "tr": "Şu an vaktim yok",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0nhia7eeh7",
+  "de": "kein Thema.",
+  "tr": "Mesele değil",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ },
+ {
+  "id": "mw0ni3tj71yv",
+  "de": "Hauptsache, es geht dir gut.",
+  "tr": "Önemli olan senin iyi olman",
+  "d0": "2026-11-03",
+  "off": [
+   0,
+   1,
+   3,
+   7,
+   11,
+   21
+  ]
+ }
+]
