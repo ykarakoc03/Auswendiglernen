@@ -66,7 +66,7 @@ const mon=i=>i.d0.slice(0,7);
 
 let S=JSON.parse(localStorage.getItem(KEY)||'null')||{cfg:{owner:'',repo:'',token:'',def:'0,1,3,6,9'},items:[],shas:{},dirty:[]};
 S.dirty=S.dirty||[];S.shas=S.shas||{};
-let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false,hide:true,rst:false,lock:false,seed:Math.random()*4294967296|0},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},R=[];
+let T='today',V={date:today(),dir:'tr',sty:'card',idx:0,shown:false,hide:true,rst:false,lock:false,seed:Math.random()*4294967296|0},busy=false,E={id:null,del:null,tx:null},F={from:'',to:''},X={fmt:'both'},R=[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
 const dirty=m=>{if(!S.dirty.includes(m))S.dirty.push(m)};
 const msg=t=>{const e=$('#msg');if(e)e.textContent=t};
@@ -156,15 +156,35 @@ function add(){
 }
 
 /* ---- Liste ---- */
+const fltd=()=>S.items.filter(i=>(!F.from||i.d0>=F.from)&&(!F.to||i.d0<=F.to));
+function exportText(){
+  return fltd().sort((a,b)=>a.d0<b.d0?-1:a.d0>b.d0?1:0).map(i=>X.fmt=='de'?i.de:i.de+' | '+i.tr).join('\n');
+}
+async function cp(){
+  const t=exportText();if(!t)return msg('Aktarılacak cümle yok.');
+  const n=t.split('\n').length;
+  try{await navigator.clipboard.writeText(t)}
+  catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}a.remove();if(!ok)return msg('Kopyalanamadı.')}
+  msg(n+' cümle panoya kopyalandı.');
+}
+async function shareTxt(){
+  const t=exportText();if(!t)return msg('Aktarılacak cümle yok.');
+  const f=new File([t],'cumleler.txt',{type:'text/plain'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(e){return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click();
+}
 function ui(k,id){E={id:null,del:null,tx:null};if(id)E[k]=id;draw()}
 function vList(){
   if(!S.items.length)return '<p class="empty">Henüz cümle yok. "Ekle" sekmesinden başla.</p>';
   const t=today(),by={};
-  const L=S.items.filter(i=>(!F.from||i.d0>=F.from)&&(!F.to||i.d0<=F.to));
+  const L=fltd();
   L.forEach(i=>(by[mon(i)]=by[mon(i)]||[]).push(i));
   const fl=`<div class="bar" style="grid-template-columns:1fr 1fr"><div><small>0. gün: başlangıç</small><input type="date" value="${F.from}" onchange="F.from=this.value;draw()"></div>
   <div><small>0. gün: bitiş</small><input type="date" value="${F.to}" onchange="F.to=this.value;draw()"></div></div>
-  <button onclick="F={from:'',to:''};draw()">Filtreyi temizle</button><p class="muted">${L.length} / ${S.items.length} cümle gösteriliyor</p>`;
+  <button onclick="F={from:'',to:''};draw()">Filtreyi temizle</button><p class="muted">${L.length} / ${S.items.length} cümle gösteriliyor</p>
+  <label>Dışa aktar (filtredeki cümleler)</label>
+  <select onchange="X.fmt=this.value"><option value="both" ${X.fmt=='both'?'selected':''}>Almanca ve Türkçe</option><option value="de" ${X.fmt=='de'?'selected':''}>Sadece Almanca</option></select>
+  <button onclick="cp()">Kopyala</button><button onclick="shareTxt()">Dosya olarak paylaş</button><p id="msg" class="muted"></p>`;
   if(!L.length)return fl+'<p class="empty">Bu tarih aralığında cümle yok.</p>';
   return fl+Object.keys(by).sort().reverse().map(m=>`<h2>${m} (${by[m].length} cümle)</h2>`+
     by[m].sort((a,b)=>a.d0<b.d0?1:-1).map(i=>{
